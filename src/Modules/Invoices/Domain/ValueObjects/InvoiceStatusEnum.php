@@ -2,6 +2,8 @@
 
 namespace Modules\Invoices\Domain\ValueObjects;
 
+use InvalidArgumentException;
+
 enum InvoiceStatusEnum: string
 {
     case DRAFT = 'draft';
@@ -11,5 +13,11 @@ enum InvoiceStatusEnum: string
     public function equals(self $other): bool
     {
         return $this->value === $other->value;
+    }
+
+    public static function fromString(string $status): self
+    {
+        return self::tryFrom($status)
+            ?? throw new InvalidArgumentException("Invalid invoice status: {$status}");
     }
 }

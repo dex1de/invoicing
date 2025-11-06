@@ -10,13 +10,15 @@ final readonly class ProductLineData
     private int $quantity;
     private Money $unitPrice;
     private Money $totalUnitPrice;
+    private string $uuid;
 
     /**
      * @param string $productName
      * @param int $quantity
      * @param Money $unitPrice
+     * @param string $uuid
      */
-    public function __construct(string $productName, int $quantity, Money $unitPrice)
+    public function __construct(string $productName, int $quantity, Money $unitPrice, string $uuid)
     {
         //quantity must be positive
         if ($quantity <= 0) {
@@ -31,15 +33,36 @@ final readonly class ProductLineData
         $this->productName = $productName;
         $this->quantity = $quantity;
         $this->unitPrice = $unitPrice;
+        $this->uuid = $uuid;
 
         //total is always calculated
         $this->totalUnitPrice = $unitPrice->multiply($quantity);
     }
 
-    public function getProductName(): string { return $this->productName; }
-    public function getQuantity(): int { return $this->quantity; }
-    public function getUnitPrice(): Money { return $this->unitPrice; }
-    public function getTotalUnitPrice(): Money { return $this->totalUnitPrice; }
+    public function getProductName(): string
+    {
+        return $this->productName;
+    }
+
+    public function getQuantity(): int
+    {
+        return $this->quantity;
+    }
+
+    public function getUuid(): string
+    {
+        return $this->uuid;
+    }
+
+    public function getUnitPrice(): Money
+    {
+        return $this->unitPrice;
+    }
+
+    public function getTotalUnitPrice(): Money
+    {
+        return $this->totalUnitPrice;
+    }
 
     public function total(): Money
     {

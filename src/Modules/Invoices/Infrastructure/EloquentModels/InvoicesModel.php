@@ -17,6 +17,8 @@ use Modules\Invoices\Domain\ValueObjects\InvoiceStatusEnum;
 class InvoicesModel extends Model
 {
     protected $table = 'invoices';
+    public $incrementing = false;
+    protected $keyType = 'string';
     protected $casts = [
         'status' => InvoiceStatusEnum::class,
     ];

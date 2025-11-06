@@ -7,6 +7,8 @@ use Modules\Invoices\Domain\Repositories\InvoiceRepositoryInterface;
 use Modules\Invoices\Domain\Repositories\ProductLineRepositoryInterface;
 use Modules\Invoices\Infrastructure\Repositories\EloquentInvoiceRepository;
 use Modules\Invoices\Infrastructure\Repositories\EloquentProductLineRepository;
+use Ramsey\Uuid\UuidFactory;
+use Ramsey\Uuid\UuidFactoryInterface;
 
 final class InvoicingServiceProvider extends ServiceProvider
 {
@@ -20,6 +22,11 @@ final class InvoicingServiceProvider extends ServiceProvider
         $this->app->bind(
             ProductLineRepositoryInterface::class,
             EloquentProductLineRepository::class
+        );
+
+        $this->app->bind(
+            UuidFactoryInterface::class,
+            UuidFactory::class
         );
     }
 }

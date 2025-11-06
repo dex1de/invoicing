@@ -8,7 +8,7 @@ use Ramsey\Uuid\UuidInterface;
 
 interface InvoiceRepositoryInterface
 {
-    public function findById(UuidInterface $id): ?InvoicesModel;
+    public function findById(UuidInterface $id): ?Invoice;
 
     public function save(Invoice $invoice): void;
 }

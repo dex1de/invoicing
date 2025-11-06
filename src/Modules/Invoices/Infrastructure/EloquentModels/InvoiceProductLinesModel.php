@@ -18,6 +18,8 @@ use Modules\Invoices\Domain\Entities\Invoice;
 class InvoiceProductLinesModel extends Model
 {
     protected $table = 'invoice_product_lines';
+    public $incrementing = false;
+    protected $keyType = 'string';
 
     protected $fillable = [
         'id',

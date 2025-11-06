@@ -2,11 +2,8 @@
 
 namespace Modules\Invoices\Domain\Entities;
 
-use App\Modules\Invoicing\Domain\Events\InvoiceCreated;
-use App\Modules\Invoicing\Domain\Events\InvoiceSentToClient;
-use App\Modules\Invoicing\Domain\Events\InvoiceStatusChanged;
-use App\Modules\Invoicing\Domain\ValueObjects\Customer;
 use DomainException;
+use Modules\Invoices\Domain\ValueObjects\Customer;
 use Modules\Invoices\Domain\ValueObjects\InvoiceStatusEnum;
 use Modules\Invoices\Domain\ValueObjects\Money;
 use Modules\Invoices\Domain\ValueObjects\ProductLineData;
@@ -16,8 +13,7 @@ class Invoice
 {
     private UuidInterface $id;
     private InvoiceStatusEnum $status;
-    private string $customerName;
-    private string $customerEmail;
+    private Customer $customer;
     private Money $totalPrice;
 
     /** @var ProductLineData[] */
@@ -28,28 +24,25 @@ class Invoice
 
     private function __construct() {}
 
-    public static function create(UuidInterface $id, object $dto): self
+    public static function create(UuidInterface $id, Customer $customer): self
     {
         $invoice = new self();
         $invoice->id = $id;
-        $invoice->customerName = $dto->customerName;
-        $invoice->customerEmail = $dto->customerEmail;
+        $invoice->customer = $customer;
         $invoice->status = InvoiceStatusEnum::DRAFT;
-        $invoice->totalPrice = $dto->totalAmount();
-        $invoice->productLines = [];
+
+        // Record a domain event
 
         return $invoice;
     }
 
-    public function addLineItem(string $productName, int $quantity, Money $unitPrice): void
+    public function addLineItem(ProductLineData $line): void
     {
-        //cannot add items to a send invoice
-        if (!$this->status->equals(InvoiceStatus::draft())) {
-            throw new DomainException("Cannot add line items to an invoice that is not in draft status.");
+        //cannot add item to a non drafted invoice
+        if (!$this->status->equals(InvoiceStatusEnum::DRAFT)) {
+            throw new DomainException("Cannot add line items to an invoice that is not in draft status");
         }
 
-        //InvoiceLineItem VO validates its own data (qty/price > 0)
-        $line = new InvoiceLineItem($productName, $quantity, $unitPrice);
         $this->productLines[] = $line;
 
         //the total price must always be correct
@@ -58,30 +51,25 @@ class Invoice
 
     public function markAsSending(): void
     {
-        if (!$this->status->equals(InvoiceStatus::draft())) {
-            throw new DomainException("Only draft invoices can be marked as sending.");
+        if (!$this->status->equals(InvoiceStatusEnum::DRAFT)) {
+            throw new DomainException("Only draft invoices can be marked as sending");
         }
 
         //cannot send an empty invoice
         if (empty($this->productLines)) {
-            throw new DomainException("Cannot send an invoice with no line items.");
+            throw new DomainException("Cannot send an invoice with no line items");
         }
 
-        $this->status = InvoiceStatus::sending();
-//        $this->recordEvent(new InvoiceStatusChanged($this->id->toString(), $this->status->value));
+        $this->status = InvoiceStatusEnum::Sending;
     }
 
     public function markAsSentToClient(): void
     {
-        if (!$this->status->equals(InvoiceStatus::sending())) {
-            throw new DomainException("Invoice must be in 'sending' status to be marked as 'sent'.");
+        if (!$this->status->equals(InvoiceStatusEnum::Sending)) {
+            throw new DomainException("Invoice must be in 'sending' status to be marked as 'sent-to-client''");
         }
 
-        $this->status = InvoiceStatus::sentToClient();
-
-        //fire two events: one generic, one specific
-//        $this->recordEvent(new InvoiceStatusChanged($this->id->toString(), $this->status->value));
-//        $this->recordEvent(new InvoiceSentToClient($this->id->toString(), $this->customer->getEmail()));
+        $this->status = InvoiceStatusEnum::SentToClient;
     }
 
     private function recalculateTotalPrice(): void
@@ -93,18 +81,6 @@ class Invoice
         $this->totalPrice = new Money($total);
     }
 
-    private function recordEvent(object $event): void
-    {
-        $this->domainEvents[] = $event;
-    }
-
-    public function releaseEvents(): array
-    {
-        $events = $this->domainEvents;
-        $this->domainEvents = [];
-        return $events;
-    }
-
     public function getId(): UuidInterface
     {
         return $this->id;
@@ -114,15 +90,9 @@ class Invoice
         return $this->status;
     }
 
-    #todo Customer ValueObjects
-    public function getCustomerName(): string
+    public function getCustomer(): Customer
     {
-        return $this->customerName;
-    }
-
-    public function getCustomerEmail(): string
-    {
-        return $this->customerEmail;
+        return $this->customer;
     }
 
     public function getTotalPrice(): Money
@@ -139,18 +109,17 @@ class Invoice
     public static function hydrate(
         UuidInterface $id,
         InvoiceStatusEnum $status,
-        string $customerName,
-        string $customerEmail,
-        Money $totalPrice,
-        array $lineItems
+        Customer $customer,
+        array $productLines,
+
     ): self {
         $invoice = new self();
         $invoice->id = $id;
         $invoice->status = $status;
-        $invoice->customerName = $customerName;
-        $invoice->customerEmail = $customerEmail;
-        $invoice->totalPrice = $totalPrice;
-        $invoice->productLines = $lineItems;
+        $invoice->customer = $customer;
+        $invoice->productLines = $productLines;
+
+        $invoice->recalculateTotalPrice();
 
         return $invoice;
     }
