@@ -21,11 +21,6 @@ final readonly class Money
         return new self((int)bcmul($decimalString, '100', 0));
     }
 
-    public function add(Money $other): self
-    {
-        return new self($this->amount + $other->amount);
-    }
-
     public function multiply(int $quantity): self
     {
         return new self($this->amount * $quantity);

@@ -4,12 +4,13 @@ namespace Modules\Invoices\Presentation\Http\Controllers;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use JetBrains\PhpStorm\NoReturn;
 use Modules\Invoices\Application\Dtos\CreateInvoiceData;
 use Modules\Invoices\Application\UseCases\CreateInvoiceUseCase;
+use Modules\Invoices\Application\UseCases\ViewInvoiceUseCase;
 use Modules\Invoices\Domain\ValueObjects\Money;
 use Modules\Invoices\Domain\ValueObjects\ProductLineData;
 use Modules\Invoices\Presentation\Http\Requests\CreateInvoiceRequest;
+use Modules\Invoices\Presentation\Http\Resources\InvoiceResource;
 use Ramsey\Uuid\UuidFactoryInterface;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -24,7 +25,8 @@ final readonly class InvoiceController
         CreateInvoiceUseCase $useCase
     ): JsonResponse {
         $productLines = collect($request['invoice_product_lines'] ?? [])
-            ->map(fn($line) => new ProductLineData(
+            ->map(fn($line) =>
+            new ProductLineData(
                 productName: $line['name'],
                 quantity:    (int) $line['quantity'],
                 unitPrice:   Money::fromFloat((float) $line['price']),
@@ -38,15 +40,15 @@ final readonly class InvoiceController
             productLines:  $productLines
         );
 
-//        try {
+        try {
             $useCase->handle($dto);
 
             return response()->json(['message' => 'ok'])->setStatusCode(Response::HTTP_CREATED);
-//        } catch (\Throwable $exception) {
-//            return response()->json([
-//                'error' => $exception->getMessage()
-//            ])->setStatusCode(Response::HTTP_INTERNAL_SERVER_ERROR);
-//        }
+        } catch (\Throwable $exception) {
+            return response()->json([
+                'error' => $exception->getMessage()
+            ])->setStatusCode(Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
     }
 
     public function send(Request $request): JsonResponse
@@ -57,11 +59,14 @@ final readonly class InvoiceController
         ]);
     }
 
-    public function view(Request $request): JsonResponse
+    public function view(string $reference, ViewInvoiceUseCase $useCase): InvoiceResource|Response
     {
-        $useCase = $this->factory->make('view');
-        return response()->json([
-            'result' => $useCase->handle($request->all()),
-        ]);
+        try {
+            $invoice = $useCase->handle($reference);
+
+            return new InvoiceResource($invoice);
+        } catch (\Throwable $exception) {
+            return response()->json(['error' => $exception->getMessage()])->setStatusCode(Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
     }
 }

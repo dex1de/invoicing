@@ -3,12 +3,10 @@
 namespace Modules\Invoices\Domain\Repositories;
 
 use Modules\Invoices\Domain\Entities\Invoice;
-use Modules\Invoices\Infrastructure\EloquentModels\InvoicesModel;
-use Ramsey\Uuid\UuidInterface;
 
 interface InvoiceRepositoryInterface
 {
-    public function findById(UuidInterface $id): ?Invoice;
+    public function findById(string $invoiceId): ?Invoice;
 
     public function save(Invoice $invoice): void;
 }

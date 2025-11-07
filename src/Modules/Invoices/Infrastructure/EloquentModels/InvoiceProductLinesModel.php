@@ -3,8 +3,6 @@
 namespace Modules\Invoices\Infrastructure\EloquentModels;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasOne;
-use Modules\Invoices\Domain\Entities\Invoice;
 
 /**
  * @property string $id
@@ -28,13 +26,4 @@ class InvoiceProductLinesModel extends Model
         'price',
         'quantity',
     ];
-
-    public function invoice(): HasOne
-    {
-        return $this->hasOne(
-            Invoice::class,
-            'id',
-            'invoice_id'
-            );
-    }
 }

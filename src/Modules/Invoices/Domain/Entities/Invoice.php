@@ -19,9 +19,6 @@ class Invoice
     /** @var ProductLineData[] */
     private array $productLines = [];
 
-    /** @var object[] */
-    private array $domainEvents = [];
-
     private function __construct() {}
 
     public static function create(UuidInterface $id, Customer $customer): self

@@ -2,12 +2,17 @@
 
 namespace Modules\Invoices\Application\UseCases;
 
-use Modules\Invoices\Application\Contracts\InvoiceUseCaseInterface;
+use Modules\Invoices\Domain\Entities\Invoice;
+use Modules\Invoices\Domain\Repositories\InvoiceRepositoryInterface;
 
-final readonly class ViewInvoiceUseCase implements InvoiceUseCaseInterface
+final readonly class ViewInvoiceUseCase
 {
-    public function handle(object $dto)
+    public function __construct(
+        private InvoiceRepositoryInterface $invoiceRepository
+    ) {}
+
+    public function handle(string $invoiceId): ?Invoice
     {
-        // TODO: Implement handle() method.
+        return $this->invoiceRepository->findById($invoiceId);
     }
 }

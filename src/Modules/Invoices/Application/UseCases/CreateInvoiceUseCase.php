@@ -3,7 +3,7 @@
 namespace Modules\Invoices\Application\UseCases;
 
 use Illuminate\Support\Facades\DB;
-use Modules\Invoices\Application\Contracts\InvoiceUseCaseInterface;
+use Modules\Invoices\Application\Dtos\CreateInvoiceData;
 use Modules\Invoices\Domain\Entities\Invoice;
 use Modules\Invoices\Domain\Events\InvoiceCreatedEvent;
 use Modules\Invoices\Domain\Repositories\InvoiceRepositoryInterface;
@@ -12,7 +12,7 @@ use Modules\Invoices\Domain\ValueObjects\Customer;
 use Ramsey\Uuid\UuidFactoryInterface;
 use Illuminate\Contracts\Events\Dispatcher;
 
-final readonly class CreateInvoiceUseCase implements InvoiceUseCaseInterface
+final readonly class CreateInvoiceUseCase
 {
     public function __construct(
         private InvoiceRepositoryInterface     $invoiceRepository,
@@ -25,7 +25,7 @@ final readonly class CreateInvoiceUseCase implements InvoiceUseCaseInterface
      * @param object $dto
      * @return void
      */
-    public function handle(object $dto): void
+    public function handle(CreateInvoiceData $dto): void
     {
         $id = $this->uuidFactory->uuid4();
         $customer = new Customer($dto->customerName, $dto->customerEmail);
