@@ -3,9 +3,9 @@
 namespace Modules\Invoices\Presentation\Http\Controllers;
 
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Modules\Invoices\Application\Dtos\CreateInvoiceData;
 use Modules\Invoices\Application\UseCases\CreateInvoiceUseCase;
+use Modules\Invoices\Application\UseCases\SendInvoiceUseCase;
 use Modules\Invoices\Application\UseCases\ViewInvoiceUseCase;
 use Modules\Invoices\Domain\ValueObjects\Money;
 use Modules\Invoices\Domain\ValueObjects\ProductLineData;
@@ -51,12 +51,17 @@ final readonly class InvoiceController
         }
     }
 
-    public function send(Request $request): JsonResponse
+    public function send(string $reference, SendInvoiceUseCase $useCase): JsonResponse
     {
-        $useCase = $this->factory->make('send');
-        return response()->json([
-            'result' => $useCase->handle($request->all()),
-        ]);
+        try {
+            $useCase->handle($reference);
+
+            return response()->json(['message' => 'ok'])->setStatusCode(Response::HTTP_ACCEPTED);
+        } catch (\Throwable $exception) {
+            return response()->json([
+                'error' => $exception->getMessage()
+            ])->setStatusCode(Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
     }
 
     public function view(string $reference, ViewInvoiceUseCase $useCase): InvoiceResource|Response

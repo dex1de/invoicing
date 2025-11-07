@@ -3,6 +3,9 @@
 namespace Modules\Invoices\Domain\Entities;
 
 use DomainException;
+use Illuminate\Support\Facades\Log;
+use Modules\Invoices\Domain\Events\InvoiceSendingEvent;
+use Modules\Invoices\Domain\Events\InvoiceSendToClientEvent;
 use Modules\Invoices\Domain\ValueObjects\Customer;
 use Modules\Invoices\Domain\ValueObjects\InvoiceStatusEnum;
 use Modules\Invoices\Domain\ValueObjects\Money;
@@ -18,6 +21,9 @@ class Invoice
 
     /** @var ProductLineData[] */
     private array $productLines = [];
+
+    /** @var object[] */
+    private array $domainEvents = [];
 
     private function __construct() {}
 
@@ -58,15 +64,24 @@ class Invoice
         }
 
         $this->status = InvoiceStatusEnum::Sending;
+
+        $this->recordEvent(
+            new InvoiceSendingEvent($this->id, $this->status)
+        );
     }
 
     public function markAsSentToClient(): void
     {
         if (!$this->status->equals(InvoiceStatusEnum::Sending)) {
+            Log::error('to fast!');
             throw new DomainException("Invoice must be in 'sending' status to be marked as 'sent-to-client''");
         }
 
         $this->status = InvoiceStatusEnum::SentToClient;
+
+        $this->recordEvent(
+            new InvoiceSendToClientEvent($this->id, $this->status)
+        );
     }
 
     private function recalculateTotalPrice(): void
@@ -76,6 +91,19 @@ class Invoice
             $total += $line->getTotalUnitPrice()->amount();
         }
         $this->totalPrice = new Money($total);
+    }
+
+    private function recordEvent(object $event): void
+    {
+        $this->domainEvents[] = $event;
+    }
+
+    public function releaseEvents(): array
+    {
+        $events = $this->domainEvents;
+        $this->domainEvents = []; // clear events after releasing them
+
+        return $events;
     }
 
     public function getId(): UuidInterface

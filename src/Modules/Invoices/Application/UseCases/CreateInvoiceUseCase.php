@@ -5,24 +5,19 @@ namespace Modules\Invoices\Application\UseCases;
 use Illuminate\Support\Facades\DB;
 use Modules\Invoices\Application\Dtos\CreateInvoiceData;
 use Modules\Invoices\Domain\Entities\Invoice;
-use Modules\Invoices\Domain\Events\InvoiceCreatedEvent;
 use Modules\Invoices\Domain\Repositories\InvoiceRepositoryInterface;
-use Modules\Invoices\Domain\Repositories\ProductLineRepositoryInterface;
 use Modules\Invoices\Domain\ValueObjects\Customer;
 use Ramsey\Uuid\UuidFactoryInterface;
-use Illuminate\Contracts\Events\Dispatcher;
 
 final readonly class CreateInvoiceUseCase
 {
     public function __construct(
-        private InvoiceRepositoryInterface     $invoiceRepository,
-        private ProductLineRepositoryInterface $productLinesRepository,
-        private UuidFactoryInterface           $uuidFactory,
-        private Dispatcher                     $dispatcher,
+        private InvoiceRepositoryInterface $invoiceRepository,
+        private UuidFactoryInterface       $uuidFactory,
     ) {}
 
     /**
-     * @param object $dto
+     * @param CreateInvoiceData $dto
      * @return void
      */
     public function handle(CreateInvoiceData $dto): void
@@ -39,12 +34,6 @@ final readonly class CreateInvoiceUseCase
             }
 
             $this->invoiceRepository->save($invoice);
-            $this->productLinesRepository->save($invoice);
-
-            $this->dispatcher->dispatch(new InvoiceCreatedEvent(
-                $invoice->getId(),
-                $invoice->getCustomer()->getEmail(),
-            ));
         });
     }
 }

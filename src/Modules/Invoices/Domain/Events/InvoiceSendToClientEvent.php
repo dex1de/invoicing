@@ -2,11 +2,12 @@
 
 namespace Modules\Invoices\Domain\Events;
 
+use Modules\Invoices\Domain\ValueObjects\InvoiceStatusEnum;
 use Ramsey\Uuid\UuidInterface;
 
-final readonly class InvoiceCreatedEvent {
+final readonly class InvoiceSendToClientEvent {
     public function __construct(
         public UuidInterface $invoiceId,
-        public string $customerEmail
+        public InvoiceStatusEnum $status
     ) {}
 }
